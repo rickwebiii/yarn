@@ -49,12 +49,18 @@ export default class NpmRegistry extends Registry {
     return name.replace('/', '%2f');
   }
 
+  getAlwaysAuth(pathname: string) {
+    const registry = addSuffix(this.getRegistry(pathname), '/');
+    const requestUrl = url.resolve(registry, pathname);
+    return this.getScopedOption(registry.replace(/^https?:/, ''), 'always-auth')
+      || this.getOption('always-auth')
+      || removePrefix(requestUrl, registry)[0] === '@';
+  }
+
   request(pathname: string, opts?: RegistryRequestOptions = {}): Promise<*> {
     const registry = addSuffix(this.getRegistry(pathname), '/');
     const requestUrl = url.resolve(registry, pathname);
-    const alwaysAuth = this.getScopedOption(registry.replace(/^https?:/, ''), 'always-auth')
-      || this.getOption('always-auth')
-      || removePrefix(requestUrl, registry)[0] === '@';
+    const alwaysAuth = this.getAlwaysAuth(pathname);
 
     const headers = {};
     if (this.token || (alwaysAuth && requestUrl.startsWith(registry))) {

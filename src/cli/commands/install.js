@@ -23,6 +23,7 @@ import * as constants from '../../constants.js';
 import * as fs from '../../util/fs.js';
 import * as crypto from '../../util/crypto.js';
 import map from '../../util/map.js';
+import {getToken} from './login.js';
 
 const invariant = require('invariant');
 const emoji = require('node-emoji');
@@ -690,13 +691,21 @@ export async function run(
     throw new MessageError(reporter.lang('installCommandRenamed', `yarn ${command} ${exampleArgs.join(' ')}`));
   }
 
-  await wrapLifecycle(config, flags, async () => {
+  await wrapLifecycle(config, flags, reporter, async () => {
     const install = new Install(flags, config, reporter, lockfile);
     await install.init();
   });
 }
 
-export async function wrapLifecycle(config: Config, flags: Object, factory: () => Promise<void>): Promise<void> {
+export async function wrapLifecycle(config: Config, flags: Object, reporter: Reporter, factory: () => Promise<void>): Promise<void> {
+  // if we have an always-auth, we need to authenticate for install calls as well.
+
+  let revoke;
+
+  if (config.registries.npm.config.registry && config.registries.npm.getAlwaysAuth(config.registries.npm.config.registry)) {
+    revoke = await getToken(config, reporter);
+  }
+
   await config.executeLifecycleScript('preinstall');
 
   await factory();
@@ -707,5 +716,9 @@ export async function wrapLifecycle(config: Config, flags: Object, factory: () =
 
   if (!flags.production) {
     await config.executeLifecycleScript('prepublish');
+  }
+
+  if (revoke) {
+    await revoke();
   }
 }
