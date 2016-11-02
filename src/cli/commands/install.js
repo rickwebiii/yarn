@@ -697,12 +697,18 @@ export async function run(
   });
 }
 
-export async function wrapLifecycle(config: Config, flags: Object, reporter: Reporter, factory: () => Promise<void>): Promise<void> {
+export async function wrapLifecycle(
+  config: Config, 
+  flags: Object, 
+  reporter: Reporter, 
+  factory: () => Promise<void>,
+): Promise<void> {
   // if we have an always-auth, we need to authenticate for install calls as well.
 
   let revoke;
 
-  if (config.registries.npm.config.registry && config.registries.npm.getAlwaysAuth(config.registries.npm.config.registry)) {
+  if (config.registries.npm.config.registry && 
+      config.registries.npm.getAlwaysAuth(config.registries.npm.config.registry)) {
     revoke = await getToken(config, reporter);
   }
 

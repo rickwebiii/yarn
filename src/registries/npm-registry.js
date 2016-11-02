@@ -49,7 +49,7 @@ export default class NpmRegistry extends Registry {
     return name.replace('/', '%2f');
   }
 
-  getAlwaysAuth(pathname: string) {
+  getAlwaysAuth(pathname: string): mixed {
     const registry = addSuffix(this.getRegistry(pathname), '/');
     const requestUrl = url.resolve(registry, pathname);
     return this.getScopedOption(registry.replace(/^https?:/, ''), 'always-auth')
